@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "Solving polyomino library.",
   "main": "build/index.js",
+  "files": [
+    "build"
+  ],
   "dependencies": {
     "typescript": "^4.2.4"
   },
