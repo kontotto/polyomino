@@ -1,0 +1,29 @@
+{
+  "name": "@kontotto/polyomino",
+  "version": "0.0.1",
+  "description": "Solving polyomino library.",
+  "main": "build/index.js",
+  "dependencies": {
+    "typescript": "^4.2.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.23",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.5.6"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kontotto/polyomino.git"
+  },
+  "author": "Shuta Kondo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kontotto/polyomino/issues"
+  },
+  "homepage": "https://github.com/kontotto/polyomino#readme"
+}
