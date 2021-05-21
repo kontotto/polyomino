@@ -24,7 +24,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm ci
-    - run: npm test
+    - run: npm test -- --verbose
   publish:
     if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
     needs: [ test ]
