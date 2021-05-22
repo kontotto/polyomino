@@ -91,6 +91,38 @@ export namespace DancingLinks {
   }
 
   export class Header extends Node {
+    removeRow() {
+      let cursor = this as Node
+      do {
+        cursor.removeUpDown()
+        cursor = cursor.right
+      } while (!Object.is(cursor, this)) 
+    }
+
+    removeColumn() {
+      let cursor = this as Node
+      do {
+        cursor.removeLeftRight()
+        cursor = cursor.up
+      } while (!Object.is(cursor, this)) 
+    }
+
+    recoverRow() {
+      let cursor = this as Node
+      do {
+        cursor.recoverUpDown()
+        cursor = cursor.right
+      } while (!Object.is(cursor, this)) 
+    }
+
+    recoverColumn() {
+      let cursor = this as Node
+      do {
+        cursor.recoverLeftRight()
+        cursor = cursor.up
+      } while (!Object.is(cursor, this)) 
+    }
+
     rowCount(): number {
       let count = 0
       let cursor = this.right
@@ -136,6 +168,7 @@ export namespace DancingLinks {
     }
 
     selectColumnHeader() : Header {
+      // console.error(`rowCount y: ${this.head.y}(${this.head.rowCount()})`)
       if(this.head.rowCount() == 0) {
         throw new Error("not found row")
       }
@@ -143,18 +176,20 @@ export namespace DancingLinks {
       let cursor = this.head.right as Header
       let selectedColumn = this.head.right as Header
       while( !Object.is(cursor, this.head) ) {
+        // console.error(`columnCount x: ${cursor.x}(${cursor.columnCount()})`)
         if(cursor.columnCount() <= 0) {
-          throw new Error("this problem cant solve")
+          throw new Error(`this problem cant solve: column(${cursor.x})`)
         } else if (selectedColumn.columnCount() > cursor.columnCount()) {
           selectedColumn = cursor
         }
         cursor = cursor.right as Header
       }
+      // console.error(`selectedColumn x: ${selectedColumn.x}`)
       return selectedColumn as Header
     }
 
     isEmpty() : boolean {
-      return this.head.columnCount() == 0
+      return this.head.rowCount() == 0
     }
 
     // input [3, 2]
@@ -191,5 +226,99 @@ export namespace DancingLinks {
       } while( !Object.is(rowCursor, this.head) )
       throw new Error(`not found x: ${x}, y: ${y}`)
     }
+
+    getRemoveRowHeaders(rowHeader: Header) : Set<Header> {
+      let rowHeaders = new Set<Header>()
+      rowHeaders.add(rowHeader)
+
+      let cursor = rowHeader.right
+      let columnHeaders = Array<Header>()
+      while(!Object.is(cursor,rowHeader)) {
+        columnHeaders.push(cursor.columnHeader())
+        cursor = cursor.right
+      }
+
+      columnHeaders.forEach(h => {
+        let cursor = h.up
+        while(!Object.is(cursor,h)) {
+          rowHeaders.add(cursor.rowHeader())
+          cursor = cursor.up
+        }
+      })
+
+      return rowHeaders
+    }
+
+    getRemoveColumnHeaders(rowHeader: Header) : Array<Header> {
+      let cursor = rowHeader.right
+      let columnHeaders = Array<Header>()
+      while(!Object.is(cursor,rowHeader)) {
+        columnHeaders.push(cursor.columnHeader())
+        cursor = cursor.right
+      }
+      return columnHeaders
+    }
+
+    solve(answers : Array<Array<Header>>, answer : Array<Header>) {
+      if(this.isEmpty()) {
+        if(answer.length != 0) {
+          let tempAnswer = answer.map(x => x)
+          answers.push(tempAnswer)
+        }
+        return
+      }
+
+      let columnHeader
+      try {
+        columnHeader = this.selectColumnHeader()
+      } catch (error) {
+        console.debug(error)
+        // console.error(answer)
+        return
+      }
+      let rowCursor = columnHeader.up
+      while(!Object.is(rowCursor, columnHeader)) {
+        let rowHeader = rowCursor.rowHeader()
+
+        answer.push(rowHeader)
+
+        let rowHeaders = this.getRemoveRowHeaders(rowHeader)
+        rowHeaders.forEach(h => {
+          h.removeRow()
+        });
+        let columnHeaders = this.getRemoveColumnHeaders(rowHeader)
+        columnHeaders.forEach(h => {
+          h.removeColumn()
+        });
+
+        this.solve(answers, answer)
+
+        columnHeaders.forEach(h => {
+          h.recoverColumn()
+        })
+        rowHeaders.forEach(h => {
+          h.recoverRow()
+        })
+
+        answer.pop()
+
+        rowCursor = rowCursor.up
+      }
+    }
+
+    //_solve(answers Array<Array<Header>>, answer Array<Header>) {
+      // 行列が空だったらanswersにanswerを追加して終了
+
+      // 最もNode数が少ないColumnHeaderを選ぶ
+
+      // 全ての候補RowHeaderに対して
+
+      // answerにRowHeaderを追加する
+      // RowHeaderが持つNodeそれぞれのColumnHeaderを削除する
+      // RowHeaderを削除する
+      // solveを呼ぶ
+      // ColumnHeaderを元に戻す
+      // RowHeaderを元に戻す
+    //}
   }
 }

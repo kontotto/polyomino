@@ -31,6 +31,25 @@ describe('DancingLinks Node tests', () => {
     expect(Object.is(node2.down, node1)).toBe(true)
   })
 
+  test('insertUp upper', () => {
+    let node0 = new DancingLinks.Node(0, 0)
+    let node1 = new DancingLinks.Node(0, 1)
+    let node2 = new DancingLinks.Node(0, 2)
+
+    node0.up = node1
+    node0.down = node1
+    node1.up = node0
+    node1.down = node0
+
+    node1.insertUp(node2)
+    expect(Object.is(node0.up, node1)).toBe(true)
+    expect(Object.is(node0.down, node2)).toBe(true)
+    expect(Object.is(node1.up, node2)).toBe(true)
+    expect(Object.is(node1.down, node0)).toBe(true)
+    expect(Object.is(node2.up, node0)).toBe(true)
+    expect(Object.is(node2.down, node1)).toBe(true)
+  })
+
   test('insertUp one Node', () => {
     let node0 = new DancingLinks.Node(0, 0)
     let node1 = new DancingLinks.Node(0, 1)
@@ -208,6 +227,110 @@ describe('DancingLinks Node tests', () => {
 });
 
 describe('DancingLinks Header tests', () =>{
+  test('removeRow', () => {
+    let header0 = new DancingLinks.Header(-1, 0)
+    let node0 = new DancingLinks.Node(0, 0)
+    let header1 = new DancingLinks.Header(-1, 1)
+    let node1 = new DancingLinks.Node(0, 1)
+    let header2 = new DancingLinks.Header(-1, 2)
+    let node2 = new DancingLinks.Node(0, 2)
+
+    header0.insertRight(node0)
+    header0.insertUp(header1)
+    node0.insertUp(node1)
+    header1.insertRight(node1)
+    header1.insertUp(header2)
+    node1.insertUp(node2)
+    header2.insertRight(node2)
+
+    header1.removeRow()
+    expect(Object.is(header0.up, header2)).toBe(true)
+    expect(Object.is(node0.up, node2)).toBe(true)
+    expect(Object.is(header1.up, header2)).toBe(true)
+    expect(Object.is(node1.up, node2)).toBe(true)
+    expect(Object.is(header2.down, header0)).toBe(true)
+    expect(Object.is(node2.down, node0)).toBe(true)
+  })
+
+  test('removeColumn', () => {
+    let header0 = new DancingLinks.Header(0, -1)
+    let node0 = new DancingLinks.Node(0, 0)
+    let header1 = new DancingLinks.Header(1, -1)
+    let node1 = new DancingLinks.Node(1, 0)
+    let header2 = new DancingLinks.Header(2, -1)
+    let node2 = new DancingLinks.Node(2, 0)
+
+    header0.insertRight(header1)
+    header0.insertUp(node0)
+    node0.insertRight(node1)
+    header1.insertRight(header2)
+    header1.insertUp(node1)
+    node1.insertRight(node2)
+    header2.insertUp(node2)
+    node1.insertRight(node2)
+
+    header1.removeColumn()
+    expect(Object.is(header0.right, header2)).toBe(true)
+    expect(Object.is(node0.right, node2)).toBe(true)
+    expect(Object.is(header1.right, header2)).toBe(true)
+    expect(Object.is(node1.right, node2)).toBe(true)
+    expect(Object.is(header2.left, header0)).toBe(true)
+    expect(Object.is(node2.left, node0)).toBe(true)
+  })
+
+  test('recoverRow', () => {
+    let header0 = new DancingLinks.Header(-1, 0)
+    let node0 = new DancingLinks.Node(0, 0)
+    let header1 = new DancingLinks.Header(-1, 1)
+    let node1 = new DancingLinks.Node(0, 1)
+    let header2 = new DancingLinks.Header(-1, 2)
+    let node2 = new DancingLinks.Node(0, 2)
+
+    header0.insertRight(node0)
+    header0.insertUp(header1)
+    node0.insertUp(node1)
+    header1.insertRight(node1)
+    header1.insertUp(header2)
+    node1.insertUp(node2)
+    header2.insertRight(node2)
+
+    header1.removeRow()
+    header1.recoverRow()
+    expect(Object.is(header0.up, header1)).toBe(true)
+    expect(Object.is(node0.up, node1)).toBe(true)
+    expect(Object.is(header1.up, header2)).toBe(true)
+    expect(Object.is(node1.up, node2)).toBe(true)
+    expect(Object.is(header2.down, header1)).toBe(true)
+    expect(Object.is(node2.down, node1)).toBe(true)
+  })
+
+  test('recoverColumn', () => {
+    let header0 = new DancingLinks.Header(0, -1)
+    let node0 = new DancingLinks.Node(0, 0)
+    let header1 = new DancingLinks.Header(1, -1)
+    let node1 = new DancingLinks.Node(1, 0)
+    let header2 = new DancingLinks.Header(2, -1)
+    let node2 = new DancingLinks.Node(2, 0)
+
+    header0.insertRight(header1)
+    header0.insertUp(node0)
+    node0.insertRight(node1)
+    header1.insertRight(header2)
+    header1.insertUp(node1)
+    node1.insertRight(node2)
+    header2.insertUp(node2)
+    node1.insertRight(node2)
+
+    header1.removeColumn()
+    header1.recoverColumn()
+    expect(Object.is(header0.right, header1)).toBe(true)
+    expect(Object.is(node0.right, node1)).toBe(true)
+    expect(Object.is(header1.right, header2)).toBe(true)
+    expect(Object.is(node1.right, node2)).toBe(true)
+    expect(Object.is(header2.left, header1)).toBe(true)
+    expect(Object.is(node2.left, node1)).toBe(true)
+  })
+
   test('rowCount', () => {
     let header = new DancingLinks.Header(-1, 0)
     let node0 = new DancingLinks.Node(0, 0)
@@ -226,6 +349,15 @@ describe('DancingLinks Header tests', () =>{
   test('rowCount only Header', () => {
     let header = new DancingLinks.Header(-1, 0)
     expect(header.rowCount()).toBe(0)
+  });
+
+  test('rowCount only Headers', () => {
+    let header0 = new DancingLinks.Header(-1, -1)
+    let header1 = new DancingLinks.Header(0, -1)
+    let header2 = new DancingLinks.Header(1, -1)
+    header0.insertRight(header1)
+    header1.insertRight(header2)
+    expect(header0.rowCount()).toBe(2)
   });
 
   test('columnCount', () => {
@@ -259,6 +391,8 @@ describe('DancingLinks Solver tests', () => {
     expect(solver.head.right.y).toBe(-1)
     expect(solver.head.right.right.x).toBe(1)
     expect(solver.head.right.right.y).toBe(-1)
+    expect(solver.head.right.right.right.x).toBe(-1)
+    expect(solver.head.right.right.right.y).toBe(-1)
     expect(solver.head.left.x).toBe(1)
     expect(solver.head.left.y).toBe(-1)
     expect(solver.head.left.left.x).toBe(0)
@@ -304,7 +438,7 @@ describe('DancingLinks Solver tests', () => {
   })
 
   test('isEmpty should true', () => {
-    let solver = new DancingLinks.Solver(1)
+    let solver = new DancingLinks.Solver(0)
     expect(solver.isEmpty()).toBe(true)
   })
 
@@ -395,4 +529,108 @@ describe('DancingLinks Solver tests', () => {
     expect(Object.is(actual, solver.findNode(1, -1))).toBe(true)
   });
 
+  test('getRemoveRowHeaders', () => {
+    let solver = new DancingLinks.Solver(4)
+    
+    let header0 = new DancingLinks.Header(-1, 0)
+    let node0_0 = new DancingLinks.Node(0, 0)
+    let node0_1 = new DancingLinks.Node(1, 0)
+    header0.insertRight(node0_0)
+    node0_0.insertRight(node0_1)
+
+    let header1 = new DancingLinks.Header(-1, 1)
+    let node1_0 = new DancingLinks.Node(1, 1)
+    let node1_1 = new DancingLinks.Node(2, 1)
+    header1.insertRight(node1_0)
+    node1_0.insertRight(node1_1)
+
+    let header2 = new DancingLinks.Header(-1, 2)
+    let node2_0 = new DancingLinks.Node(3, 2)
+    header2.insertRight(node2_0)
+
+    let header3 = new DancingLinks.Header(-1, 3)
+    let node3_0 = new DancingLinks.Node(0, 3)
+    let node3_1 = new DancingLinks.Node(3, 3)
+    header3.insertRight(node3_0)
+    node3_0.insertRight(node3_1)
+
+    solver.addHeaders(header0, header1, header2, header3)
+
+    let actual = solver.getRemoveRowHeaders(header0)
+    expect(actual.has(header0)).toBe(true)
+    expect(actual.has(header1)).toBe(true)
+    expect(actual.has(header2)).toBe(false)
+    expect(actual.has(header3)).toBe(true)
+  });
+
+  test('getRemoveColumnHeaders', () => {
+    let solver = new DancingLinks.Solver(2)
+    
+    let header0 = new DancingLinks.Header(-1, 0)
+    let node0 = new DancingLinks.Node(0, 0)
+    let node1 = new DancingLinks.Node(1, 0)
+    header0.insertRight(node0)
+    node0.insertRight(node1)
+
+    solver.addHeaders(header0)
+    let actual = solver.getRemoveColumnHeaders(header0)
+    expect(Object.is(actual[0], solver.findNode(0, -1))).toBe(true)
+    expect(Object.is(actual[1], solver.findNode(1, -1))).toBe(true)
+  });
+
+  test('solve empty', () => {
+    let solver = new DancingLinks.Solver(0)
+
+    let answers = new Array<Array<DancingLinks.Header>>()
+    let answer = new Array<DancingLinks.Header>()
+    solver.solve(answers, answer)
+    expect(answers.length).toBe(0)
+  });
+
+  test('solve one row, column', () => {
+    let solver = new DancingLinks.Solver(1)
+    let header = new DancingLinks.Header(-1, 0)
+    let node = new DancingLinks.Node(0, 0)
+    header.insertRight(node)
+    solver.addHeaders(header)
+
+    let answers = new Array<Array<DancingLinks.Header>>()
+    solver.solve(answers, [])
+    expect(Object.is(answers[0][0], header)).toBe(true)
+  });
+
+  test('solve two rows, columns', () => {
+    let solver = new DancingLinks.Solver(4)
+
+    let header0 = new DancingLinks.Header(-1, 0)
+    let node0_0 = new DancingLinks.Node(0, 0)
+    let node0_1 = new DancingLinks.Node(1, 0)
+    header0.insertRight(node0_0)
+    node0_0.insertRight(node0_1)
+
+    let header1 = new DancingLinks.Header(-1, 1)
+    let node1_0 = new DancingLinks.Node(1, 1)
+    let node1_1 = new DancingLinks.Node(2, 1)
+    header1.insertRight(node1_0)
+    node1_0.insertRight(node1_1)
+
+    let header2 = new DancingLinks.Header(-1, 2)
+    let node2_0 = new DancingLinks.Node(3, 2)
+    header2.insertRight(node2_0)
+
+    let header3 = new DancingLinks.Header(-1, 3)
+    let node3_0 = new DancingLinks.Node(0, 3)
+    let node3_1 = new DancingLinks.Node(3, 3)
+    header3.insertRight(node3_0)
+    node3_0.insertRight(node3_1)
+
+    solver.addHeaders(header0, header1, header2, header3)
+
+    let answers = new Array<Array<DancingLinks.Header>>()
+
+    solver.solve(answers, [])
+
+    expect(Object.is(answers[0][0], header1)).toBe(true)
+    expect(Object.is(answers[0][1], header3)).toBe(true)
+  });
 });
