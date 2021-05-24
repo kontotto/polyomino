@@ -142,6 +142,18 @@ export namespace DancingLinks {
       }
       return count 
     }
+
+    toStringRow(): string {
+      let str = `y: ${this.y}, [`
+      let cursor = this as Node
+      do {
+        str += `${cursor.x}, `
+        cursor = cursor.right
+      }
+      while ( !Object.is(cursor, this) ) 
+      str += `]`
+      return str
+    }
   }
 
   export class Solver {
@@ -168,7 +180,6 @@ export namespace DancingLinks {
     }
 
     selectColumnHeader() : Header {
-      // console.error(`rowCount y: ${this.head.y}(${this.head.rowCount()})`)
       if(this.head.rowCount() == 0) {
         throw new Error("not found row")
       }
@@ -176,7 +187,6 @@ export namespace DancingLinks {
       let cursor = this.head.right as Header
       let selectedColumn = this.head.right as Header
       while( !Object.is(cursor, this.head) ) {
-        // console.error(`columnCount x: ${cursor.x}(${cursor.columnCount()})`)
         if(cursor.columnCount() <= 0) {
           throw new Error(`this problem cant solve: column(${cursor.x})`)
         } else if (selectedColumn.columnCount() > cursor.columnCount()) {
@@ -184,7 +194,6 @@ export namespace DancingLinks {
         }
         cursor = cursor.right as Header
       }
-      // console.error(`selectedColumn x: ${selectedColumn.x}`)
       return selectedColumn as Header
     }
 
@@ -272,10 +281,9 @@ export namespace DancingLinks {
       try {
         columnHeader = this.selectColumnHeader()
       } catch (error) {
-        console.debug(error)
-        // console.error(answer)
         return
       }
+
       let rowCursor = columnHeader.up
       while(!Object.is(rowCursor, columnHeader)) {
         let rowHeader = rowCursor.rowHeader()
