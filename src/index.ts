@@ -1,3 +1,5 @@
-export const sum
-  = (...a: number[]) =>
-    a.reduce((acc, val) => acc + val, 0);
+import { DancingLinks } from "./dancinglinks"
+export { DancingLinks }
+
+import { Polyomino } from "./polyomino"
+export { Polyomino }
