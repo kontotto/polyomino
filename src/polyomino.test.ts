@@ -47,6 +47,42 @@ describe('Polyomino Piece tests', () => {
     expect(() => board.getNumber(0, -1)).toThrow(Error)
   })
 
+  test('getOverflowMaps', () => {
+    let pieceMaps0 = [
+      true, true,
+      true, true,
+    ]
+    let piece0 = new Polyomino.Piece(2, 2, pieceMaps0)
+    
+    let pieceMaps1 = [
+      true, true,
+    ]
+    let piece1 = new Polyomino.Piece(2, 1, pieceMaps1)
+
+    let pieceMaps2 = [
+      true,
+      true,
+      true,
+    ]
+    let piece2 = new Polyomino.Piece(1, 3, pieceMaps2)
+
+    expect(piece0.getOverflowMaps()).toEqual([
+      0, 1,
+      2, 3,
+    ])
+
+    expect(piece1.getOverflowMaps()).toEqual([
+      -1, -1,
+      0, 1,
+    ])
+
+    expect(piece2.getOverflowMaps()).toEqual([
+      0, -1, -1,
+      1, -1, -1,
+      2, -1, -1,
+    ])
+  })
+
   test('getPieceMaps', () => {
     let boardMaps = 
     [
