@@ -53,6 +53,25 @@ export namespace Polyomino {
       return this.maps[y*this.width + x];
     }
 
+    getOverflowMaps() : Array<number> {
+      let maps = this.maps.map(x => x)
+      if(this.width === this.height) {
+        return maps
+      } else if (this.width > this.height) {
+        let rows = this.width - this.height
+        let tempMaps = new Array<number>(rows * this.width).fill(-1)
+        maps.splice(0, 0, ...tempMaps)
+        return maps
+      } else {
+        let columns = this.height - this.width
+        let tempMaps = new Array<number>(columns).fill(-1)
+        for (let i = 0; i < this.height; i++) {
+          maps.splice((this.width + columns) * i + this.width ,0 , ...tempMaps)
+        }
+        return maps
+      }
+    }
+
     getPieceMaps(x: number, y: number, p: Piece) : Array<number> {
       if(x < 0 || y < 0 || x >= this.width || y >= this.height ) {
         throw new Error(`invalid x=${x}, y=${y}`)
