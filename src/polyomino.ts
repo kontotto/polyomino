@@ -32,6 +32,10 @@ export namespace Polyomino {
       return this.maps.filter(m => m != -1).length
     }
 
+    clone() : Piece {
+      return new Piece(this.width, this.height, this.maps.map(x => x >= 0))
+    } 
+
     contains(x: number, y: number, piece: Piece) : boolean {
       if(x < 0 || y < 0 || x >= this.width || y >= this.height ) {
         throw new Error(`invalid x=${x}, y=${y}`)
@@ -44,6 +48,58 @@ export namespace Polyomino {
         }
       }
       return true
+    }
+
+    equal(piece: Piece) : boolean {
+      if(this.width != piece.width) return false
+      if(this.height != piece.height) return false
+
+      for (let i = 0; i < this.maps.length; i++) {
+        if(this.maps[i] != piece.maps[i]) return false
+      }
+      return true
+    }
+
+    getReversePieces() : Array<Piece> {
+      let reversePieces = new Array<Piece>()
+
+      let xMaps = new Array<number>(this.width*this.height)
+      let yMaps = new Array<number>(this.width*this.height)
+      for (let x = 0; x < this.width; x++) {
+        for (let y = 0; y < this.height; y++) {
+          xMaps[y * this.width + (this.width - x - 1)] = this.getNumber(x, y)
+          yMaps[(this.height - y - 1) * this.width + x] = this.getNumber(x, y)
+        }
+      }
+      let xPieceMaps = xMaps.map(m => m >= 0)
+      let yPieceMaps = yMaps.map(m => m >= 0)
+
+      reversePieces.push(new Polyomino.Piece(this.width, this.height, xPieceMaps))
+      reversePieces.push(new Polyomino.Piece(this.width, this.height, yPieceMaps))
+      return reversePieces
+    }
+
+    getRotatePieces() : Array<Piece> {
+      let rotatePieces = new Array<Piece>()
+
+      let rotate90Maps = new Array<number>(this.height*this.width)
+      let rotate180Maps = new Array<number>(this.width*this.height)
+      let rotate270Maps = new Array<number>(this.height*this.width)
+      for (let x = 0; x < this.width; x++) {
+        for (let y = 0; y < this.height; y++) {
+          rotate90Maps[x * this.height + (this.height - y - 1)] = this.getNumber(x, y)
+          rotate180Maps[(this.height - y - 1) * this.width + (this.width - x - 1)] = this.getNumber(x, y)
+          rotate270Maps[(this.width - x - 1) * this.height + y] = this.getNumber(x, y)
+        }
+      }
+      let rotate90PieceMaps = rotate90Maps.map(m => m >= 0)
+      let rotate180PieceMaps = rotate180Maps.map(m => m >= 0)
+      let rotate270PieceMaps = rotate270Maps.map(m => m >= 0)
+
+      rotatePieces.push(new Polyomino.Piece(this.width, this.height, rotate90PieceMaps))
+      rotatePieces.push(new Polyomino.Piece(this.height, this.width, rotate180PieceMaps))
+      rotatePieces.push(new Polyomino.Piece(this.width, this.height, rotate270PieceMaps))
+      return rotatePieces
     }
 
     getNumber(x: number, y: number) : number {
@@ -107,34 +163,69 @@ export namespace Polyomino {
     }
   }
 
+  export interface SolverOptions {
+    allowReverse?: boolean,
+    allowRotate?: boolean,
+  }
+
   export class Solver {
     /*
       actualBoardSize + pieces.length
     */
     collectionSize!: number
     board!: Piece
-    pieces!: Array<Piece>
     headers!: Array<DancingLinks.Header>
 
-    constructor(board: Piece, pieces: Array<Piece>) {
+    constructor(board: Piece, pieces: Array<Piece>, options?: SolverOptions ) {
       this.collectionSize = board.actualSize() + pieces.length
-      this.board = board
-      this.pieces = pieces
-
+      this.board = board.clone()
       this.headers = new Array<DancingLinks.Header>()
-
       let count = 0
-      this.pieces.forEach((p, i) => {
-        for (let x = 0; x + p.width <= board.width; x++) {
-          for (let y = 0; y + p.height <= board.height; y++) {
-            if(board.contains(x, y, p)) {
-              let subsetMaps = board.getPieceMaps(x, y, p)
-              subsetMaps = subsetMaps.filter(m => {return m !== -1})
-              subsetMaps.push(board.actualSize()+i)
-              this.headers.push(ToHeader(count++, subsetMaps))
+
+      pieces.map(p => p.clone()).forEach((p, i) => {
+        let optionPieces = new Array<Piece>()
+        optionPieces.push(p)
+
+        if(options?.allowReverse) {
+          let tempOptionPiecesList = new Array<Array<Piece>>()
+          optionPieces.forEach(op => {
+            tempOptionPiecesList.push(op.getReversePieces())
+          })
+
+          tempOptionPiecesList.forEach(op => {
+            op.forEach(p => {
+              optionPieces.push(p)
+            })
+          })
+        }
+
+        if(options?.allowRotate) {
+          let tempOptionPiecesList = new Array<Array<Piece>>()
+          optionPieces.forEach(op => {
+            tempOptionPiecesList.push(op.getRotatePieces())
+          })
+
+          tempOptionPiecesList.forEach(op => {
+            op.forEach(p => {
+              optionPieces.push(p)
+            })
+          })
+        }
+
+        GetUniquePieces(optionPieces)
+
+        optionPieces.forEach(op => {
+          for (let x = 0; x + op.width <= board.width; x++) {
+            for (let y = 0; y + op.height <= board.height; y++) {
+              if(board.contains(x, y, op)) {
+                let subsetMaps = board.getPieceMaps(x, y, op)
+                subsetMaps = subsetMaps.filter(m => m >= 0)
+                subsetMaps.push(board.actualSize()+i)
+                this.headers.push(ToHeader(count++, subsetMaps))
+              }
             }
           }
-        }
+        })
       })
     }
 
@@ -220,4 +311,14 @@ export namespace Polyomino {
     return number
   }
 
+  export function GetUniquePieces(pieces: Array<Piece>) {
+    for (let i = pieces.length - 1; i > 0; i--) {
+      for (let j = i - 1; j >= 0; j--) {
+        if (pieces[i].equal(pieces[j])) {
+          pieces.splice(j, 1)
+          i--
+        }
+      }
+    }
+  }
 }

@@ -23,6 +23,75 @@ describe('Polyomino Piece tests', () => {
     expect(piece.actualSize()).toBe(3)
   })
 
+  test('getReversePieces', () => {
+    let pieceMap = [
+      true, false, false,
+      true, true, true,
+    ]
+    let piece = new Polyomino.Piece(3, 2, pieceMap)
+
+    let reversePieceMap0 = [
+      false, false, true,
+      true, true, true,
+    ]
+    let reversePiece0 = new Polyomino.Piece(3, 2, reversePieceMap0)
+
+    let reversePieceMap1 = [
+      true, true, true,
+      true, false, false,
+    ]
+    let reversePiece1 = new Polyomino.Piece(3, 2, reversePieceMap1)
+    let reversePieces = piece.getReversePieces()
+
+    expect(reversePieces.length).toEqual(2)
+    expect(reversePieces[0].maps).toEqual(reversePiece0.maps)
+    expect(reversePieces[1].maps).toEqual(reversePiece1.maps)
+  })
+
+  test('equal', () => {
+    let piece0_0 = new Polyomino.Piece(1, 1, [true])
+    let piece0_1 = new Polyomino.Piece(1, 1, [true])
+    expect(piece0_0.equal(piece0_1)).toEqual(true)
+
+    let piece1_0 = new Polyomino.Piece(2, 1, [true, true])
+    let piece1_1 = new Polyomino.Piece(2, 1, [true, false])
+    expect(piece1_0.equal(piece1_1)).toEqual(false)
+  })
+
+  test('getRotatePieces', () => {
+    let pieceMap = [
+      true, false, false,
+      true, true, true,
+    ]
+    let piece = new Polyomino.Piece(3, 2, pieceMap)
+
+    let rotatePieceMap0 = [
+      true, true,
+      true, false,
+      true, false,
+    ]
+    let rotatePiece0 = new Polyomino.Piece(2, 3, rotatePieceMap0)
+
+    let rotatePieceMap1 = [
+      true, true, true,
+      false, false, true,
+    ]
+    let rotatePiece1 = new Polyomino.Piece(3, 2, rotatePieceMap1)
+
+    let rotatePieceMap2 = [
+      false, true,
+      false, true,
+      true, true,
+    ]
+    let rotatePiece2 = new Polyomino.Piece(2, 3, rotatePieceMap2)
+
+    let rotatePieces = piece.getRotatePieces()
+    expect(rotatePieces.length).toEqual(3)
+    expect(rotatePieces[0].maps).toEqual(rotatePiece0.maps)
+    expect(rotatePieces[1].maps).toEqual(rotatePiece1.maps)
+    expect(rotatePieces[2].maps).toEqual(rotatePiece2.maps)
+  })
+
   test('getNumber', () => {
     let board_maps = 
     [
@@ -125,6 +194,14 @@ describe('Polyomino Piece tests', () => {
     expect(() => board.getSubsetMaps(0, 0, 1, 2)).toThrow(Error)
   })
 
+  test('clone', () => {
+    let piece = new Polyomino.Piece(2, 1, [true, false])
+    let clone = piece.clone()
+
+    expect(Object.is(piece, clone)).toEqual(false)
+    expect(piece.equal(clone)).toEqual(true)
+  })
+
   test('contains', () => {
     let board_maps = 
     [
@@ -225,9 +302,42 @@ describe('Polyomino Solver tests', () => {
 
     let solver = new Polyomino.Solver(board, pieces)
     expect(solver.collectionSize).toBe(4)
-    expect(Object.is(solver.board, board)).toBe(true)
-    expect(Object.is(solver.pieces, pieces)).toBe(true)
+    expect(solver.board.equal(board)).toBe(true)
     expect(solver.headers.length).toBe(3)
+  })
+
+  test('constructor options', () => {
+    let board = new Polyomino.Piece(2, 2, [true, false, true, true])
+    let pieces = [
+      new Polyomino.Piece(1, 1, [true]),
+      new Polyomino.Piece(2, 1, [true, true]),
+    ]
+
+    let options: Polyomino.SolverOptions = {
+      allowReverse: true,
+      allowRotate: true,
+    }
+    let solver = new Polyomino.Solver(board, pieces, options)
+    expect(solver.collectionSize).toBe(5)
+    expect(solver.board.equal(board)).toBe(true)
+    expect(solver.headers.length).toBe(5)
+  })
+
+  test('constructor options complex', () => {
+    let board = new Polyomino.Piece(3, 2, [true, true, true, true, true, true])
+    let pieces = [
+      new Polyomino.Piece(2, 2, [true, false, true, true]),
+      new Polyomino.Piece(2, 2, [true, true, false, true]),
+    ]
+
+    let options: Polyomino.SolverOptions = {
+      allowReverse: true,
+      allowRotate: true,
+    }
+    let solver = new Polyomino.Solver(board, pieces, options)
+    expect(solver.collectionSize).toBe(8)
+    expect(solver.board.equal(board)).toBe(true)
+    expect(solver.headers.length).toBe(16)
   })
 
   test('constructor complex', () => {
@@ -270,8 +380,7 @@ describe('Polyomino Solver tests', () => {
 
     let solver = new Polyomino.Solver(board, pieces)
     expect(solver.collectionSize).toBe(26)
-    expect(Object.is(solver.board, board)).toBe(true)
-    expect(Object.is(solver.pieces, pieces)).toBe(true)
+    expect(solver.board.equal(board)).toBe(true)
     expect(solver.headers.filter(h => h.left.x == 22).length).toBe(6)
     expect(solver.headers.filter(h => h.left.x == 23).length).toBe(7)
     expect(solver.headers.filter(h => h.left.x == 24).length).toBe(6)
@@ -404,5 +513,31 @@ describe('Polyomino ToNumber tests', () => {
 
     let answerMaps = Polyomino.ToNumber(headers, board)
     expect(answerMaps).toEqual([0, -1, 0, 1])
+  })
+})
+
+describe('Polyomino GetUniquePieces tests', () => {
+  test('GetUniquePieces', () => {
+    let piece0_0 = new Polyomino.Piece(1, 1, [true])
+    let piece0_1 = new Polyomino.Piece(2, 1, [true, true])
+    let piece0_2 = new Polyomino.Piece(1, 1, [true])
+    let piece0_3 = new Polyomino.Piece(2, 1, [true, true])
+    let piece0_4 = new Polyomino.Piece(2, 1, [true, true])
+    let piece0_5 = new Polyomino.Piece(2, 1, [true, true])
+    let piece0_6 = new Polyomino.Piece(2, 1, [true, true])
+
+    let pieces = new Array<Polyomino.Piece>()
+    pieces.push(piece0_0)
+    pieces.push(piece0_1)
+    pieces.push(piece0_2)
+    pieces.push(piece0_3)
+    pieces.push(piece0_4)
+    pieces.push(piece0_5)
+    pieces.push(piece0_6)
+
+    Polyomino.GetUniquePieces(pieces)
+    expect(pieces.length).toEqual(2)
+    expect(pieces[0].equal(piece0_0)).toEqual(true)
+    expect(pieces[1].equal(piece0_1)).toEqual(true)
   })
 })
