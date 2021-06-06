@@ -1,6 +1,6 @@
 {
   "name": "@kontotto/polyomino",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Solving polyomino library.",
   "main": "build/index.js",
   "files": [
