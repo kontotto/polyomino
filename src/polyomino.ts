@@ -96,9 +96,9 @@ export namespace Polyomino {
       let rotate180PieceMaps = rotate180Maps.map(m => m >= 0)
       let rotate270PieceMaps = rotate270Maps.map(m => m >= 0)
 
-      rotatePieces.push(new Polyomino.Piece(this.width, this.height, rotate90PieceMaps))
-      rotatePieces.push(new Polyomino.Piece(this.height, this.width, rotate180PieceMaps))
-      rotatePieces.push(new Polyomino.Piece(this.width, this.height, rotate270PieceMaps))
+      rotatePieces.push(new Polyomino.Piece(this.height, this.width, rotate90PieceMaps))
+      rotatePieces.push(new Polyomino.Piece(this.width, this.height, rotate180PieceMaps))
+      rotatePieces.push(new Polyomino.Piece(this.height, this.width, rotate270PieceMaps))
       return rotatePieces
     }
 
@@ -197,6 +197,7 @@ export namespace Polyomino {
               optionPieces.push(p)
             })
           })
+          GetUniquePieces(optionPieces)
         }
 
         if(options?.allowRotate) {
@@ -210,9 +211,9 @@ export namespace Polyomino {
               optionPieces.push(p)
             })
           })
+          GetUniquePieces(optionPieces)
         }
 
-        GetUniquePieces(optionPieces)
 
         optionPieces.forEach(op => {
           for (let x = 0; x + op.width <= board.width; x++) {

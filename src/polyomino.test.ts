@@ -23,6 +23,16 @@ describe('Polyomino Piece tests', () => {
     expect(piece.actualSize()).toBe(3)
   })
 
+  test('equal', () => {
+    let piece0_0 = new Polyomino.Piece(1, 1, [true])
+    let piece0_1 = new Polyomino.Piece(1, 1, [true])
+    expect(piece0_0.equal(piece0_1)).toEqual(true)
+
+    let piece1_0 = new Polyomino.Piece(2, 1, [true, true])
+    let piece1_1 = new Polyomino.Piece(2, 1, [true, false])
+    expect(piece1_0.equal(piece1_1)).toEqual(false)
+  })
+
   test('getReversePieces', () => {
     let pieceMap = [
       true, false, false,
@@ -44,18 +54,61 @@ describe('Polyomino Piece tests', () => {
     let reversePieces = piece.getReversePieces()
 
     expect(reversePieces.length).toEqual(2)
+    expect(reversePieces[0].equal(reversePiece0)).toEqual(true)
+    expect(reversePieces[1].equal(reversePiece1)).toEqual(true)
+  })
+
+  test('getReversePieces complex', () => {
+    let pieceMap = [
+      false, true, true,
+      true, true, false,
+      false, true, false,
+    ]
+    let piece = new Polyomino.Piece(3, 3, pieceMap)
+
+    let reversePieceMap0 = [
+      true, true, false,
+      false, true, true,
+      false, true, false,
+    ]
+    let reversePiece0 = new Polyomino.Piece(3, 3, reversePieceMap0)
+
+    let reversePieceMap1 = [
+      false, true, false,
+      true, true, false,
+      false, true, true,
+    ]
+    let reversePiece1 = new Polyomino.Piece(3, 3, reversePieceMap1)
+    let reversePieces = piece.getReversePieces()
+
+    expect(reversePieces.length).toEqual(2)
     expect(reversePieces[0].maps).toEqual(reversePiece0.maps)
     expect(reversePieces[1].maps).toEqual(reversePiece1.maps)
   })
 
-  test('equal', () => {
-    let piece0_0 = new Polyomino.Piece(1, 1, [true])
-    let piece0_1 = new Polyomino.Piece(1, 1, [true])
-    expect(piece0_0.equal(piece0_1)).toEqual(true)
+  test('getReversePieces complex 2', () => {
+    let pieceMap = [
+      true, false, false, false,
+      true, true, true, true,
+    ]
+    let piece = new Polyomino.Piece(4, 2, pieceMap)
 
-    let piece1_0 = new Polyomino.Piece(2, 1, [true, true])
-    let piece1_1 = new Polyomino.Piece(2, 1, [true, false])
-    expect(piece1_0.equal(piece1_1)).toEqual(false)
+    let reversePieceMap0 = [
+      false, false, false, true,
+      true, true, true, true,
+    ]
+    let reversePiece0 = new Polyomino.Piece(4, 2, reversePieceMap0)
+
+    let reversePieceMap1 = [
+      true, true, true, true,
+      true, false, false, false,
+    ]
+    let reversePiece1 = new Polyomino.Piece(4, 2, reversePieceMap1)
+    let reversePieces = piece.getReversePieces()
+
+    expect(reversePieces.length).toEqual(2)
+    expect(reversePieces[0].equal(reversePiece0)).toEqual(true)
+    expect(reversePieces[1].equal(reversePiece1)).toEqual(true)
   })
 
   test('getRotatePieces', () => {
@@ -87,9 +140,122 @@ describe('Polyomino Piece tests', () => {
 
     let rotatePieces = piece.getRotatePieces()
     expect(rotatePieces.length).toEqual(3)
-    expect(rotatePieces[0].maps).toEqual(rotatePiece0.maps)
-    expect(rotatePieces[1].maps).toEqual(rotatePiece1.maps)
-    expect(rotatePieces[2].maps).toEqual(rotatePiece2.maps)
+    expect(rotatePieces[0].equal(rotatePiece0)).toEqual(true)
+    expect(rotatePieces[1].equal(rotatePiece1)).toEqual(true)
+    expect(rotatePieces[2].equal(rotatePiece2)).toEqual(true)
+  })
+
+  test('getRotatePieces complex', () => {
+    let pieceMap = [
+      false, true, true,
+      true, true, false,
+      false, true, false
+    ]
+    let piece = new Polyomino.Piece(3, 3, pieceMap)
+
+    let rotatePieceMap0 = [
+      false, true, false,
+      true, true, true,
+      false, false, true,
+    ]
+    let rotatePiece0 = new Polyomino.Piece(3, 3, rotatePieceMap0)
+
+    let rotatePieceMap1 = [
+      false, true, false,
+      false, true, true,
+      true, true, false,
+    ]
+    let rotatePiece1 = new Polyomino.Piece(3, 3, rotatePieceMap1)
+
+    let rotatePieceMap2 = [
+      true, false, false,
+      true, true, true,
+      false, true, false,
+    ]
+    let rotatePiece2 = new Polyomino.Piece(3, 3, rotatePieceMap2)
+
+    let rotatePieces = piece.getRotatePieces()
+    expect(rotatePieces.length).toEqual(3)
+    expect(rotatePieces[0].equal(rotatePiece0)).toEqual(true)
+    expect(rotatePieces[1].equal(rotatePiece1)).toEqual(true)
+    expect(rotatePieces[2].equal(rotatePiece2)).toEqual(true)
+  })
+
+  test('getRotatePieces complex 2', () => {
+    let pieceMap = [
+      true, false, false, false,
+      true, true, true, true,
+    ]
+    let piece = new Polyomino.Piece(4, 2, pieceMap)
+
+    let rotatePieceMap0 = [
+      true, true,
+      true, false,
+      true, false,
+      true, false,
+    ]
+    let rotatePiece0 = new Polyomino.Piece(2, 4, rotatePieceMap0)
+
+    let rotatePieceMap1 = [
+      true, true, true, true,
+      false, false, false, true,
+    ]
+    let rotatePiece1 = new Polyomino.Piece(4, 2, rotatePieceMap1)
+
+    let rotatePieceMap2 = [
+      false, true,
+      false, true,
+      false, true,
+      true, true,
+    ]
+    let rotatePiece2 = new Polyomino.Piece(2, 4, rotatePieceMap2)
+
+    let rotatePieces = piece.getRotatePieces()
+    expect(rotatePieces.length).toEqual(3)
+    expect(rotatePieces[0].equal(rotatePiece0)).toEqual(true)
+    expect(rotatePieces[1].equal(rotatePiece1)).toEqual(true)
+    expect(rotatePieces[2].equal(rotatePiece2)).toEqual(true)
+  })
+
+  test('getReversePieces and getRotatePieces', () => {
+    let pieceMap = [
+      true, false, false, false,
+      true, true, true, true,
+    ]
+    let piece = new Polyomino.Piece(4, 2, pieceMap)
+
+    let pieces = new Array<Polyomino.Piece>()
+    pieces.push(piece)
+
+    {
+      let tempOptionPiecesList = new Array<Array<Polyomino.Piece>>()
+      pieces.forEach(p => {
+        tempOptionPiecesList.push(p.getReversePieces())
+      })
+
+      tempOptionPiecesList.forEach(op => {
+        op.forEach(p => {
+          pieces.push(p)
+        })
+      })
+      Polyomino.GetUniquePieces(pieces)
+    }
+
+    {
+      let tempOptionPiecesList = new Array<Array<Polyomino.Piece>>()
+      pieces.forEach(p => {
+        tempOptionPiecesList.push(p.getRotatePieces())
+      })
+
+      tempOptionPiecesList.forEach(op => {
+        op.forEach(p => {
+          pieces.push(p)
+        })
+      })
+      Polyomino.GetUniquePieces(pieces)
+    }
+
+    expect(pieces.length).toEqual(8)
   })
 
   test('getNumber', () => {
@@ -484,6 +650,103 @@ describe('Polyomino Solver tests', () => {
       -1, 3, 3, 3, 3,
     ]
     expect(answers[0]).toEqual(expect0)
+  })
+
+  test('solve chocolate pazzle', () => {
+    let boardMaps = [
+      true, true, true, true, true, true, true, true, true, true,
+      true, true, true, true, true, true, true, true, true, true,
+      true, true, true, true, true, true, true, true, true, true,
+      true, true, true, true, true, true, true, true, true, true,
+      true, true, true, true, true, true, true, true, true, true,
+      true, true, true, true, true, true, true, true, true, true,
+    ]
+    let board = new Polyomino.Piece(10, 6, boardMaps)
+
+    let pieceF = [
+      true, true, false,
+      false, true, true,
+      false, true, false,
+    ]
+    let pieceI = [
+      true,
+      true,
+      true,
+      true,
+      true,
+    ]
+    let pieceL = [
+      false, false, false, true,
+      true, true, true, true,
+    ]
+    let pieceN = [
+      false, true,
+      true, true,
+      true, false,
+      true, false
+    ]
+    let pieceP = [
+      true, true, false,
+      true, true, true,
+    ]
+    let pieceT = [
+      true, true, true,
+      false, true, false,
+      false, true, false
+    ]
+    let pieceU = [
+      true, true, true,
+      true, false, true,
+    ]
+    let pieceV = [
+      false, false, true,
+      false, false, true,
+      true, true, true,
+    ]
+    let pieceW = [
+      true, true, false,
+      false, true, true,
+      false, false, true,
+    ]
+    let pieceX = [
+      false, true, false,
+      true, true, true,
+      false, true, false,
+    ]
+    let pieceY = [
+      true, true, true, true,
+      false, true, false, false,
+    ]
+    let pieceZ = [
+      false, true, true,
+      false, true, false,
+      true, true, false
+    ]
+
+    let pieces = [
+      new Polyomino.Piece(3, 3, pieceF),
+      new Polyomino.Piece(1, 5, pieceI),
+      new Polyomino.Piece(4, 2, pieceL),
+      new Polyomino.Piece(2, 4, pieceN),
+      new Polyomino.Piece(3, 2, pieceP),
+      new Polyomino.Piece(3, 3, pieceT),
+      new Polyomino.Piece(3, 2, pieceU),
+      new Polyomino.Piece(3, 3, pieceV),
+      new Polyomino.Piece(3, 3, pieceW),
+      new Polyomino.Piece(3, 3, pieceX),
+      new Polyomino.Piece(4, 2, pieceY),
+      new Polyomino.Piece(3, 3, pieceZ),
+    ]
+
+    let options: Polyomino.SolverOptions = {
+      allowReverse: true,
+      allowRotate: true,
+    }
+    let solver = new Polyomino.Solver(board, pieces, options)
+    let answers = solver.solve()
+
+    // 対象解含む
+    expect(answers.length).toEqual(9356)
   })
 })
 
