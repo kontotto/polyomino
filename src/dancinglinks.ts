@@ -65,7 +65,7 @@ export namespace DancingLinks {
       }
 
       let cursor = this.right
-      while ( !Object.is(cursor, this) ) {
+      while ( cursor !== this ) {
         if ( cursor instanceof Header ) {
           return cursor as Header
         }
@@ -80,7 +80,7 @@ export namespace DancingLinks {
       }
 
       let cursor = this.down
-      while ( !Object.is(cursor, this) ) {
+      while ( cursor !== this ) {
         if ( cursor instanceof Header ) {
           return cursor as Header
         }
@@ -96,7 +96,7 @@ export namespace DancingLinks {
       do {
         cursor.removeUpDown()
         cursor = cursor.right
-      } while (!Object.is(cursor, this)) 
+      } while ( cursor !== this ) 
     }
 
     removeColumn() {
@@ -104,7 +104,7 @@ export namespace DancingLinks {
       do {
         cursor.removeLeftRight()
         cursor = cursor.up
-      } while (!Object.is(cursor, this)) 
+      } while ( cursor !== this ) 
     }
 
     recoverRow() {
@@ -112,7 +112,7 @@ export namespace DancingLinks {
       do {
         cursor.recoverUpDown()
         cursor = cursor.right
-      } while (!Object.is(cursor, this)) 
+      } while ( cursor !== this ) 
     }
 
     recoverColumn() {
@@ -120,13 +120,13 @@ export namespace DancingLinks {
       do {
         cursor.recoverLeftRight()
         cursor = cursor.up
-      } while (!Object.is(cursor, this)) 
+      } while ( cursor !== this ) 
     }
 
     rowCount(): number {
       let count = 0
       let cursor = this.right
-      while ( !Object.is(cursor, this) ) {
+      while ( cursor !== this ) {
         count++
         cursor = cursor.right
       }
@@ -136,7 +136,7 @@ export namespace DancingLinks {
     columnCount(): number {
       let count = 0
       let cursor = this.up
-      while ( !Object.is(cursor, this) ) {
+      while ( cursor !== this ) {
         count++
         cursor = cursor.up
       }
@@ -150,7 +150,7 @@ export namespace DancingLinks {
         str += `${cursor.x}, `
         cursor = cursor.right
       }
-      while ( !Object.is(cursor, this) ) 
+      while ( cursor !== this ) 
       str += `]`
       return str
     }
@@ -175,7 +175,7 @@ export namespace DancingLinks {
         do {
           this.findSmallerColumnNode(cursor.x, cursor.y).insertUp(cursor)
           cursor = cursor.right
-        } while (!Object.is(cursor, h as Node))
+        } while ( cursor !== h as Node )
       })
     }
 
@@ -186,7 +186,7 @@ export namespace DancingLinks {
 
       let cursor = this.head.right as Header
       let selectedColumn = this.head.right as Header
-      while( !Object.is(cursor, this.head) ) {
+      while( cursor !== this.head ) {
         if(cursor.columnCount() <= 0) {
           throw new Error(`this problem cant solve: column(${cursor.x})`)
         } else if (selectedColumn.columnCount() > cursor.columnCount()) {
@@ -212,7 +212,7 @@ export namespace DancingLinks {
           return cursor
         }
         cursor = cursor.up
-      } while ( !Object.is(cursor, columnHeader) )
+      } while ( cursor !== columnHeader )
       return columnHeader
     }
 
@@ -228,11 +228,11 @@ export namespace DancingLinks {
             if(columnCursor.x == x && columnCursor.y == y){
               return columnCursor
             }
-          } while ( !Object.is(columnCursor, rowCursor) )
+          } while ( columnCursor !== rowCursor )
           break
         }
         rowCursor = rowCursor.right
-      } while( !Object.is(rowCursor, this.head) )
+      } while( rowCursor !== this.head )
       throw new Error(`not found x: ${x}, y: ${y}`)
     }
 
@@ -242,14 +242,14 @@ export namespace DancingLinks {
 
       let cursor = rowHeader.right
       let columnHeaders = Array<Header>()
-      while(!Object.is(cursor,rowHeader)) {
+      while(cursor !== rowHeader) {
         columnHeaders.push(cursor.columnHeader())
         cursor = cursor.right
       }
 
       columnHeaders.forEach(h => {
         let cursor = h.up
-        while(!Object.is(cursor,h)) {
+        while(cursor !== h) {
           rowHeaders.add(cursor.rowHeader())
           cursor = cursor.up
         }
@@ -261,7 +261,7 @@ export namespace DancingLinks {
     getRemoveColumnHeaders(rowHeader: Header) : Array<Header> {
       let cursor = rowHeader.right
       let columnHeaders = Array<Header>()
-      while(!Object.is(cursor,rowHeader)) {
+      while(cursor !== rowHeader) {
         columnHeaders.push(cursor.columnHeader())
         cursor = cursor.right
       }
@@ -285,11 +285,9 @@ export namespace DancingLinks {
       }
 
       let rowCursor = columnHeader.up
-      while(!Object.is(rowCursor, columnHeader)) {
+      while(rowCursor !== columnHeader) {
         let rowHeader = rowCursor.rowHeader()
-
         answer.push(rowHeader)
-
         let rowHeaders = this.getRemoveRowHeaders(rowHeader)
         rowHeaders.forEach(h => {
           h.removeRow()
@@ -307,9 +305,7 @@ export namespace DancingLinks {
         rowHeaders.forEach(h => {
           h.recoverRow()
         })
-
         answer.pop()
-
         rowCursor = rowCursor.up
       }
     }
