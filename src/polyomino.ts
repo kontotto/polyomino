@@ -278,6 +278,21 @@ export namespace Polyomino {
       })
       return numbers 
     }
+
+    solveAsync(numberAnswers: Array<Array<number>>) : Promise<void>{
+      return new Promise((resolve, reject) => {
+        let solver = new DancingLinks.Solver(this.collectionSize)
+        solver.addHeaders(...this.headers)
+
+        let answers = new Array<Array<DancingLinks.Header>>()
+        solver.solve(answers, [])
+
+        answers.forEach(a => {
+          numberAnswers.push(Polyomino.ToNumber(a, this.board))
+        })
+        resolve()
+      })
+    }
   }
 
   export function ToHeader(y: number, maps: Array<number>) : DancingLinks.Header{
