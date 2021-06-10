@@ -748,6 +748,45 @@ describe('Polyomino Solver tests', () => {
     // 対象解含む
     expect(answers.length).toEqual(9356)
   })
+
+  test('solveAsync', async () => {
+    let boardMaps = [
+      true, true, false,
+      true, true, true,
+      true, true, true,
+    ]
+    let board = new Polyomino.Piece(3, 3, boardMaps)
+
+    let pieces = [
+      new Polyomino.Piece(2, 2, [true, true, true, true]),
+      new Polyomino.Piece(2, 1, [true, true]),
+      new Polyomino.Piece(1, 2, [true, true]),
+    ]
+
+    let solver = new Polyomino.Solver(board, pieces)
+    let answers = new Array<Array<number>>()
+    await solver.solveAsync(answers)
+
+    let expect0 = [
+      0, 0, -1,
+      0, 0, 2,
+      1, 1, 2,
+    ]
+    let expect1 = [
+      1, 1, -1,
+      0, 0, 2,
+      0, 0, 2,
+    ]
+    let expect2 = [
+      1, 1, -1,
+      2, 0, 0,
+      2, 0, 0,
+    ]
+    expect(answers.length).toEqual(3)
+    expect(answers[0]).toEqual(expect0)
+    expect(answers[1]).toEqual(expect1)
+    expect(answers[2]).toEqual(expect2)
+  })
 })
 
 describe('Polyomino ToHeader tests', () => {
