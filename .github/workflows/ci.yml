@@ -17,7 +17,7 @@ jobs:
       - uses: jdx/mise-action@v3
       - run: mise install
       - name: Cache node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
@@ -37,7 +37,7 @@ jobs:
       - uses: jdx/mise-action@v3
       - run: mise install
       - name: Cache node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
