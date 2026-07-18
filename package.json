@@ -1,6 +1,6 @@
 {
   "name": "@kontotto/polyomino",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Solving polyomino library.",
   "main": "build/index.js",
   "files": [
@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "npm run test:typecheck && vitest run",
+    "test": "tsc --noEmit --project tsconfig.test.json && vitest run",
     "test:typecheck": "tsc --noEmit --project tsconfig.test.json",
     "test:watch": "vitest"
   },

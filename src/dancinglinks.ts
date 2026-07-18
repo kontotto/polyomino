@@ -158,14 +158,18 @@ export namespace DancingLinks {
 
   export class Solver {
     head!: Header
+    private columnHeaders: Array<Header>
 
     constructor(collectionSize: number) {
       // head ↔ 0 ↔ 1 ↔ ... ↔ head
       this.head = new Header(-1, -1)
+      this.columnHeaders = new Array<Header>(collectionSize)
       let cursor = this.head as Node
       for( let i = 0; i < collectionSize; i++ ) {
-        cursor.insertRight(new Header(i, -1))
+        let columnHeader = new Header(i, -1)
+        cursor.insertRight(columnHeader)
         cursor = cursor.right
+        this.columnHeaders[i] = columnHeader
       }
     }
 
@@ -269,45 +273,143 @@ export namespace DancingLinks {
     }
 
     solve(answers : Array<Array<Header>>, answer : Array<Header>) {
-      if(this.isEmpty()) {
-        if(answer.length != 0) {
-          let tempAnswer = answer.map(x => x)
-          answers.push(tempAnswer)
+      const root = 0
+      const columnCount = this.columnHeaders.length
+      const left = new Array<number>(columnCount + 1)
+      const right = new Array<number>(columnCount + 1)
+      const up = new Array<number>(columnCount + 1)
+      const down = new Array<number>(columnCount + 1)
+      const columns = new Array<number>(columnCount + 1)
+      const sizes = new Array<number>(columnCount + 1).fill(0)
+      const rowHeaders = new Array<Header | undefined>(columnCount + 1)
+      const nodeIndices = new Map<Node, number>()
+      const rowNodes = new Array<Array<number>>()
+
+      left[root] = columnCount
+      right[root] = columnCount == 0 ? root : 1
+      for(let column = 1; column <= columnCount; column++) {
+        left[column] = column - 1
+        right[column] = column == columnCount ? root : column + 1
+        up[column] = column
+        down[column] = column
+        columns[column] = column
+      }
+
+      let rowHeaderCursor = this.head.up as Header
+      while(rowHeaderCursor !== this.head) {
+        const nodes = new Array<number>()
+        let nodeCursor = rowHeaderCursor.right
+        while(nodeCursor !== rowHeaderCursor) {
+          const index = left.length
+          nodeIndices.set(nodeCursor, index)
+          nodes.push(index)
+          left.push(index)
+          right.push(index)
+          up.push(index)
+          down.push(index)
+          columns.push(nodeCursor.x + 1)
+          sizes[nodeCursor.x + 1]++
+          rowHeaders.push(rowHeaderCursor)
+          nodeCursor = nodeCursor.right
         }
-        return
+        rowNodes.push(nodes)
+        rowHeaderCursor = rowHeaderCursor.up as Header
       }
 
-      let columnHeader
-      try {
-        columnHeader = this.selectColumnHeader()
-      } catch (error) {
-        return
-      }
-
-      let rowCursor = columnHeader.up
-      while(rowCursor !== columnHeader) {
-        let rowHeader = rowCursor.rowHeader()
-        answer.push(rowHeader)
-        let rowHeaders = this.getRemoveRowHeaders(rowHeader)
-        rowHeaders.forEach(h => {
-          h.removeRow()
-        });
-        let columnHeaders = this.getRemoveColumnHeaders(rowHeader)
-        columnHeaders.forEach(h => {
-          h.removeColumn()
-        });
-
-        this.solve(answers, answer)
-
-        columnHeaders.forEach(h => {
-          h.recoverColumn()
+      rowNodes.forEach(nodes => {
+        nodes.forEach((node, index) => {
+          left[node] = nodes[(index + nodes.length - 1) % nodes.length]
+          right[node] = nodes[(index + 1) % nodes.length]
         })
-        rowHeaders.forEach(h => {
-          h.recoverRow()
-        })
-        answer.pop()
-        rowCursor = rowCursor.up
+      })
+
+      const verticalIndex = (node: Node) : number => {
+        if(node.y == -1 && node.x >= 0 && this.columnHeaders[node.x] === node) {
+          return node.x + 1
+        }
+        const index = nodeIndices.get(node)
+        if(index === undefined) {
+          throw new Error(`node is not registered: x=${node.x}, y=${node.y}`)
+        }
+        return index
       }
+
+      for(let column = 0; column < columnCount; column++) {
+        const header = this.columnHeaders[column]
+        up[column + 1] = verticalIndex(header.up)
+        down[column + 1] = verticalIndex(header.down)
+      }
+      nodeIndices.forEach((index, node) => {
+        up[index] = verticalIndex(node.up)
+        down[index] = verticalIndex(node.down)
+      })
+      const linkedLeft = Int32Array.from(left)
+      const linkedRight = Int32Array.from(right)
+      const linkedUp = Int32Array.from(up)
+      const linkedDown = Int32Array.from(down)
+      const linkedColumns = Int32Array.from(columns)
+      const linkedSizes = Int32Array.from(sizes)
+
+      const coverColumn = (column: number) => {
+        linkedRight[linkedLeft[column]] = linkedRight[column]
+        linkedLeft[linkedRight[column]] = linkedLeft[column]
+        for(let row = linkedUp[column]; row !== column; row = linkedUp[row]) {
+          for(let node = linkedRight[row]; node !== row; node = linkedRight[node]) {
+            linkedDown[linkedUp[node]] = linkedDown[node]
+            linkedUp[linkedDown[node]] = linkedUp[node]
+            linkedSizes[linkedColumns[node]]--
+          }
+        }
+      }
+
+      const uncoverColumn = (column: number) => {
+        for(let row = linkedDown[column]; row !== column; row = linkedDown[row]) {
+          for(let node = linkedLeft[row]; node !== row; node = linkedLeft[node]) {
+            linkedSizes[linkedColumns[node]]++
+            linkedDown[linkedUp[node]] = node
+            linkedUp[linkedDown[node]] = node
+          }
+        }
+        linkedRight[linkedLeft[column]] = column
+        linkedLeft[linkedRight[column]] = column
+      }
+
+      const search = () => {
+        if(linkedRight[root] === root) {
+          if(answer.length != 0) {
+            answers.push(answer.slice())
+          }
+          return
+        }
+
+        let selectedColumn = linkedRight[root]
+        for(let column = linkedRight[selectedColumn]; column !== root; column = linkedRight[column]) {
+          if(linkedSizes[column] < linkedSizes[selectedColumn]) {
+            selectedColumn = column
+          }
+        }
+        if(linkedSizes[selectedColumn] == 0) {
+          return
+        }
+
+        coverColumn(selectedColumn)
+        for(let row = linkedUp[selectedColumn]; row !== selectedColumn; row = linkedUp[row]) {
+          answer.push(rowHeaders[row]!)
+          for(let node = linkedRight[row]; node !== row; node = linkedRight[node]) {
+            coverColumn(linkedColumns[node])
+          }
+
+          search()
+
+          for(let node = linkedLeft[row]; node !== row; node = linkedLeft[node]) {
+            uncoverColumn(linkedColumns[node])
+          }
+          answer.pop()
+        }
+        uncoverColumn(selectedColumn)
+      }
+
+      search()
     }
 
     //_solve(answers Array<Array<Header>>, answer Array<Header>) {

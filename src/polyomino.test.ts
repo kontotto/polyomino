@@ -747,7 +747,30 @@ describe('Polyomino Solver tests', () => {
 
     // 対象解含む
     expect(answers.length).toEqual(9356)
+    expect(new Set(answers.map(answer => answer.join(','))).size).toEqual(9356)
   }, 120_000)
+
+  test('solve restores symmetric solution orbits without duplicates', async () => {
+    const board = new Polyomino.Piece(5, 4, new Array<boolean>(20).fill(true))
+    const pieces = [
+      new Polyomino.Piece(5, 2, new Array<boolean>(10).fill(true)),
+      new Polyomino.Piece(5, 2, new Array<boolean>(10).fill(true)),
+    ]
+
+    const solver = new Polyomino.Solver(board, pieces)
+    const answers = solver.solve()
+    const asyncAnswers = new Array<Array<number>>()
+    await solver.solveAsync(asyncAnswers)
+    const uniqueAnswers = new Set(answers.map(answer => answer.join(',')))
+    const expectedAnswers = new Set([
+      new Array<number>(10).fill(0).concat(new Array<number>(10).fill(1)).join(','),
+      new Array<number>(10).fill(1).concat(new Array<number>(10).fill(0)).join(','),
+    ])
+
+    expect(answers.length).toEqual(2)
+    expect(uniqueAnswers).toEqual(expectedAnswers)
+    expect(new Set(asyncAnswers.map(answer => answer.join(',')))).toEqual(expectedAnswers)
+  })
 
   test('solveAsync', async () => {
     let boardMaps = [
