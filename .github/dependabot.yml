@@ -18,12 +18,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-      test-dependencies:
-        patterns:
-          - "jest"
-          - "@jest/*"
-          - "ts-jest"
-          - "@types/jest"
 
   # GitHub Actionsの更新を監視
   - package-ecosystem: "github-actions"
