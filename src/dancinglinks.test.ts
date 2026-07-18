@@ -1,4 +1,4 @@
-import { DiagnosticCategory } from 'typescript';
+import { describe, expect, test } from 'vitest';
 import { DancingLinks } from './dancinglinks';
 
 describe('DancingLinks Node tests', () => {

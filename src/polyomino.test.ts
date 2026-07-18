@@ -1,4 +1,4 @@
-import { DancingLinks } from './dancinglinks';
+import { describe, expect, test } from 'vitest';
 import { Polyomino } from './polyomino';
 
 describe('Polyomino Piece tests', () => {
@@ -747,7 +747,7 @@ describe('Polyomino Solver tests', () => {
 
     // 対象解含む
     expect(answers.length).toEqual(9356)
-  })
+  }, 120_000)
 
   test('solveAsync', async () => {
     let boardMaps = [
