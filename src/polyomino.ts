@@ -175,11 +175,20 @@ export namespace Polyomino {
     collectionSize!: number
     board!: Piece
     headers!: Array<DancingLinks.Header>
+    private boardCellCount: number
+    private boardIndexes: Int32Array
+    private placementCells: Array<Array<number>>
 
     constructor(board: Piece, pieces: Array<Piece>, options?: SolverOptions ) {
-      this.collectionSize = board.actualSize() + pieces.length
+      this.boardCellCount = board.actualSize()
+      this.collectionSize = this.boardCellCount + pieces.length
       this.board = board.clone()
       this.headers = new Array<DancingLinks.Header>()
+      this.boardIndexes = new Int32Array(this.boardCellCount)
+      board.maps.forEach((cell, index) => {
+        if(cell >= 0) this.boardIndexes[cell] = index
+      })
+      this.placementCells = new Array<Array<number>>()
       let count = 0
 
       pieces.map(p => p.clone()).forEach((p, i) => {
@@ -221,13 +230,107 @@ export namespace Polyomino {
               if(board.contains(x, y, op)) {
                 let subsetMaps = board.getPieceMaps(x, y, op)
                 subsetMaps = subsetMaps.filter(m => m >= 0)
-                subsetMaps.push(board.actualSize()+i)
+                this.placementCells.push(subsetMaps.slice())
+                subsetMaps.push(this.boardCellCount+i)
                 this.headers.push(ToHeader(count++, subsetMaps))
               }
             }
           }
         })
       })
+    }
+
+    private getSymmetryOptimization() : {
+      headers: Array<DancingLinks.Header>,
+      placementTransforms: Array<Int32Array>,
+    } | undefined {
+      if(this.boardCellCount < 20 || this.headers.length == 0) return undefined
+
+      // Only use board symmetries that map every legal placement back to a
+      // legal placement of the same labelled piece. This proves that the
+      // transformation maps complete solutions to complete solutions.
+      const width = this.board.width
+      const height = this.board.height
+      const coordinateTransforms = [
+        (x: number, y: number) => [x, y],
+        (x: number, y: number) => [width - 1 - x, y],
+        (x: number, y: number) => [x, height - 1 - y],
+        (x: number, y: number) => [width - 1 - x, height - 1 - y],
+      ]
+      if(width == height) {
+        coordinateTransforms.push(
+          (x: number, y: number) => [height - 1 - y, x],
+          (x: number, y: number) => [y, width - 1 - x],
+          (x: number, y: number) => [y, x],
+          (x: number, y: number) => [width - 1 - y, height - 1 - x],
+        )
+      }
+
+      const pieceIndexes = this.headers.map(header => header.left.x - this.boardCellCount)
+      const placementLookup = new Map<string, number>()
+      this.placementCells.forEach((cells, placement) => {
+        placementLookup.set(`${pieceIndexes[placement]}:${cells.slice().sort((a, b) => a - b).join(',')}`, placement)
+      })
+
+      const placementTransforms = new Array<Int32Array>()
+      coordinateTransforms.forEach(transform => {
+        const cellTransform = new Int32Array(this.boardCellCount)
+        let valid = true
+        for(let y = 0; y < height && valid; y++) {
+          for(let x = 0; x < width; x++) {
+            const cell = this.board.maps[y * width + x]
+            if(cell < 0) continue
+            const [transformedX, transformedY] = transform(x, y)
+            const transformedCell = this.board.maps[transformedY * width + transformedX]
+            if(transformedCell < 0) {
+              valid = false
+              break
+            }
+            cellTransform[cell] = transformedCell
+          }
+        }
+        if(!valid) return
+
+        const transformedPlacements = new Int32Array(this.headers.length)
+        for(let placement = 0; placement < this.headers.length; placement++) {
+          const cells = this.placementCells[placement]
+            .map(cell => cellTransform[cell])
+            .sort((a, b) => a - b)
+          const transformedPlacement = placementLookup.get(`${pieceIndexes[placement]}:${cells.join(',')}`)
+          if(transformedPlacement === undefined) {
+            valid = false
+            break
+          }
+          transformedPlacements[placement] = transformedPlacement
+        }
+        if(valid) placementTransforms.push(transformedPlacements)
+      })
+
+      if(placementTransforms.length <= 1) return undefined
+
+      // Searching one canonical placement of a pivot piece visits every
+      // solution orbit. solve() restores the complete orbit and removes the
+      // duplicates produced by solutions that are themselves symmetric.
+      let pivotPiece = 0
+      let pivotPlacements = pieceIndexes.filter(piece => piece == pivotPiece).length
+      const pieceCount = this.collectionSize - this.boardCellCount
+      for(let piece = 1; piece < pieceCount; piece++) {
+        const count = pieceIndexes.filter(index => index == piece).length
+        if(count < pivotPlacements) {
+          pivotPiece = piece
+          pivotPlacements = count
+        }
+      }
+
+      const headers = this.headers.filter((_, placement) => {
+        if(pieceIndexes[placement] != pivotPiece) return true
+        let canonicalPlacement = placement
+        placementTransforms.forEach(transform => {
+          canonicalPlacement = Math.min(canonicalPlacement, transform[placement])
+        })
+        return placement == canonicalPlacement
+      })
+      return { headers, placementTransforms }
     }
 
     /*
@@ -264,31 +367,60 @@ export namespace Polyomino {
           ],
         ]
     */
-    solve() : Array<Array<number>>{
+    private solveHeaders() : Array<Array<DancingLinks.Header>> {
+      const symmetry = this.getSymmetryOptimization()
       let solver = new DancingLinks.Solver(this.collectionSize)
-      solver.addHeaders(...this.headers)
+      solver.addHeaders(...(symmetry?.headers ?? this.headers))
 
       let answers = new Array<Array<DancingLinks.Header>>()
       solver.solve(answers, [])
+      if(symmetry !== undefined) {
+        const expandedAnswers = new Array<Array<DancingLinks.Header>>()
+        const seen = new Set<string>()
+        answers.forEach(answer => {
+          symmetry.placementTransforms.forEach(transform => {
+            const transformedAnswer = answer.map(header => this.headers[transform[header.y]])
+            const key = transformedAnswer.map(header => header.y).sort((a, b) => a - b).join(',')
+            if(!seen.has(key)) {
+              seen.add(key)
+              expandedAnswers.push(transformedAnswer)
+            }
+          })
+        })
+        answers = expandedAnswers
+      }
+      return answers
+    }
 
+    private answerToNumber(answer: Array<DancingLinks.Header>) : Array<number> {
+      const number = this.board.maps.slice()
+      answer.forEach(header => {
+        const pieceIndex = header.left.x - this.boardCellCount
+        let cursor = header.right as DancingLinks.Node
+        while(cursor !== header && cursor !== header.left) {
+          number[this.boardIndexes[cursor.x]] = pieceIndex
+          cursor = cursor.right
+        }
+      })
+      return number
+    }
+
+    solve() : Array<Array<number>>{
+      const answers = this.solveHeaders()
       let numbers = Array<Array<number>>()
 
       answers.forEach(a => {
-        numbers.push(Polyomino.ToNumber(a, this.board))
+        numbers.push(this.answerToNumber(a))
       })
       return numbers 
     }
 
     solveAsync(numberAnswers: Array<Array<number>>) : Promise<void>{
       return new Promise((resolve, reject) => {
-        let solver = new DancingLinks.Solver(this.collectionSize)
-        solver.addHeaders(...this.headers)
-
-        let answers = new Array<Array<DancingLinks.Header>>()
-        solver.solve(answers, [])
+        const answers = this.solveHeaders()
 
         answers.forEach(a => {
-          numberAnswers.push(Polyomino.ToNumber(a, this.board))
+          numberAnswers.push(this.answerToNumber(a))
         })
         resolve()
       })
@@ -308,12 +440,22 @@ export namespace Polyomino {
 
   export function ToNumber(answer: Array<DancingLinks.Header>, board: Piece) : Array<number>{
     let number = board.maps.map(x => x)
+    const boardSize = board.actualSize()
+    const boardIndexes = new Int32Array(boardSize)
+    const assigned = new Uint8Array(boardSize)
+    board.maps.forEach((cell, index) => {
+      if(cell >= 0) boardIndexes[cell] = index
+    })
     answer.forEach(a => {
       let index = a.left.x
       let cursor = a.right as DancingLinks.Node
 
       while(!Object.is(cursor, a) && !Object.is(cursor,a.left)) {
-        number[number.indexOf(cursor.x)] = index
+        const boardIndex = cursor.x >= 0 && cursor.x < boardSize && assigned[cursor.x] == 0
+          ? boardIndexes[cursor.x]
+          : number.indexOf(cursor.x)
+        number[boardIndex] = index
+        if(cursor.x >= 0 && cursor.x < boardSize) assigned[cursor.x] = 1
         cursor = cursor.right
       }
     })
@@ -322,7 +464,7 @@ export namespace Polyomino {
       if(n == -1) {
         return
       }
-      number[i] -= board.actualSize()
+      number[i] -= boardSize
     })
     return number
   }
